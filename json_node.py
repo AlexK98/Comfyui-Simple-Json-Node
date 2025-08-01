@@ -25,27 +25,35 @@ class SimpleJSONParserNode:
             
             keys = path.split('.')
             for key in keys:
-                if key.isdigit():
-                    data = data[int(key)]
-                elif '[' in key and ']' in key:
-                    list_key, index = key[:-1].split('[')
-                    data = data[list_key][int(index)]
-                else:
-                    data = data[key]
-            
+                try:
+                    if key.isdigit():
+                        data = data[int(key)]
+                    elif '[' in key and ']' in key:
+                        list_key, index = key[:-1].split('[')
+                        data = data[list_key][int(index)]
+                    else:
+                        data = data[key]
+                except (KeyError, IndexError, TypeError):
+                    msg = f"Error: key or index '{key}' not found in path '{path}'"
+                    print(msg)
+                    return msg, -1
+
             array_size = len(data) if isinstance(data, list) else -1
             
             if isinstance(data, (dict, list)):
                 return json.dumps(data, indent=2), array_size
             else:
                 return str(data), array_size
+
         except json.JSONDecodeError:
-            raise ValueError("Invalid JSON string")
-        except (KeyError, IndexError, TypeError):
-            raise ValueError("Invalid path or key not found")
+            msg = "Error: invalid JSON string"
+            print(msg)
+            return msg, -1
+        except (KeyError, IndexError, TypeError) as e:
+            msg = f"Error: key or index not found ({e})"
+            print(msg)
+            return msg, -1
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
         return float("NaN")
-
-
